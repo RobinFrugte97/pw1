@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+	<title>Adamlink SPARQLen met javascript</title>
+
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link href="https://fonts.googleapis.com/css?family=Nunito:700" rel="stylesheet">
+
+	<style type="text/css">
+		body{
+			padding: 40px;
+			text-align: center;
+		}
+		h1{
+			font-family: "Nunito";
+		}
+		img{
+			height: 200px;
+			margin-right: 20px;
+			margin-bottom: 20px;
+			border:5px solid #000;
+		}
+	</style>
+
+
+
+</head>
+<body>
+
+<h1>Fetch and show results from Adamlink SPARQL endpoint with js</h1>
+<div id="images"></div>
+
+
+
+
+<script>
+
+	var sparqlquery = `
+	PREFIX dc: <http://purl.org/dc/elements/1.1/>
+	PREFIX owl: <http://www.w3.org/2002/07/owl#>
+	PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+	PREFIX wd: <http://www.wikidata.org/entity/>
+	PREFIX p: <http://www.wikidata.org/prop/>
+	PREFIX ps: <http://www.wikidata.org/prop/statement/>
+	PREFIX pq: <http://www.wikidata.org/prop/qualifier/>
+
+	SELECT ?person ?start ?end ?url ?image ?title WHERE {
+	{
+	  SERVICE <https://query.wikidata.org/sparql>
+	  {
+	   ?person p:P39 ?bn .
+	   ?bn ps:P39 wd:Q13423495 .
+	   ?bn pq:P580 ?start .
+	   ?bn pq:P582 ?end .
+	  }
+	 ?url dc:subject ?person .
+	 ?url foaf:depiction ?image .
+	 ?url dc:title ?title .
+	}
+	UNION
+	{
+	 SERVICE <https://query.wikidata.org/sparql>
+	  {
+	   ?person p:P39 ?bn .
+	   ?bn ps:P39 wd:Q13423495 .
+	   ?bn pq:P580 ?start .
+	   ?bn pq:P582 ?end .
+	  }
+	 ?url dc:subject ?pers .
+	 ?pers owl:sameAs ?person .
+	 ?url foaf:depiction ?image .
+	 ?url dc:title ?title .
+	}
+	}
+	ORDER BY ?start
+
+	`;
+		// more fun dc:types: 'affiche', 'japonstof', 'tegel', 'herenkostuum'
+		// more fun dc:subjects with Poster.: 'Privacy.', 'Pop music.', 'Music.', 'Squatters movement.'
+
+	var encodedquery = encodeURIComponent(sparqlquery);
+
+	var queryurl = 'https://api.data.adamlink.nl/datasets/AdamNet/all/services/endpoint/sparql?default-graph-uri=&query=' + encodedquery + '&format=application%2Fsparql-results%2Bjson&timeout=0&debug=on';
+
+	fetch(queryurl)
+	.then((resp) => resp.json()) // transform the data into json
+  	.then(function(data) {
+
+		rows = data.results.bindings; // get the results
+		imgdiv = document.getElementById('images');
+		console.log(rows);
+
+		for (i = 0; i < rows.length; ++i) {
+
+		    var img = document.createElement('img');
+				var header = document.createElement('h3');
+				var tijd = document.createElement('p');
+				var start = Number(rows[i]['start']['value'].slice(0, 4));
+				var end = Number(rows[i]['end']['value'].slice(0, 4));
+				header.innerHTML = rows[i]['title']['value'];
+		    img.src = rows[i]['image']['value'];
+		    img.title = rows[i]['title']['value'];
+				tijd.innerHTML = "Functie periode: " + start + "-" + end;
+		    imgdiv.appendChild(header);
+				imgdiv.appendChild(img);
+				imgdiv.appendChild(tijd)
+
+		}
+	})
+	.catch(function(error) {
+		// if there is any error you will catch them here
+		console.log(error);
+	});
+
+</script>
+
+
+
+</body>
+</html>
