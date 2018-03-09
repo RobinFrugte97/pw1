@@ -2,118 +2,325 @@
 <html>
 <head>
 
-	<title>Adamlink SPARQLen met javascript</title>
+	<title>Slopende Burgemeesters</title>
 
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link href="https://fonts.googleapis.com/css?family=Nunito:700" rel="stylesheet">
 
 	<style type="text/css">
-		body{
-			padding: 40px;
+
+		*:focus {
+			outline: none;
+		}
+		body {
+			margin: 0;
+			padding: 0;
 			text-align: center;
-		}
-		h1{
 			font-family: "Nunito";
+			margin-bottom: 2em;
 		}
-		img{
+		header {
+			position: fixed;
+			min-width: 100%;
+			text-align: center;
+			top: 0;
+			background: linear-gradient(270deg, #7ffddc, #3bec90, #b680f5);
+			background-size: 600% 600%;
+			animation: Gradient 10s ease infinite;
+			z-index: 999999999999999999999999999999999999999999999;
+			display: flex;
+			flex-direction: column;
+			margin-bottom: .3em;
+		}
+		input {
+			width: 33%;
+			align-self: center;
+			margin-bottom: 1em;
+			padding: .3em;
+			border: none;
+		}
+		h1 {
+			font-family: "Nunito";
+			color: rgba(255,255,255,0.8);
+		}
+		img {
 			height: 200px;
-			margin-right: 20px;
-			margin-bottom: 20px;
-			border:5px solid #000;
+			margin: 10% 0%;
+			z-index: 10;
+			opacity: .75;
+			position: relative;
+		}
+		img:hover {
+			opacity: 1;
+			transition: .3s;
+		}
+		h3 {
+			z-index: 2;
+			font-size: 1.5em;
+		}
+		ul {
+			padding: 0;
+			z-index: 2;
+			display: none;
+			transition: .3s;
+		}
+		img:focus + ul {
+			display: block;
+		}
+		li {
+			list-style: none;
+			margin-bottom: .25em;
+		}
+		body>main>div {
+			position: relative;
+			margin: 0 11%;
+			padding: 0;
+		}
+
+		body>main>div:focus-within {
+			background: linear-gradient(45deg, #7ffddc, #3bec90, #b680f5);
+			background-size: 400% 400%;
+			animation: Gradient 10s ease infinite;
+    	border-radius: 5px;
+			transition: .3s;
+			box-shadow: 17px 18px 70px -16px rgba(128,126,128,1);
+			animation: none;
+		}
+
+		body>main>div:focus-within img {
+			opacity: 1;
+			animation: Gradient 0s ease infinite;
+		}
+
+		body>main>div>p {
+		}
+
+		body>main {
+			display: grid;
+	    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+	    grid-gap: 1em;
+	    grid-row-gap: 3em;
+	    margin-top: 10em;
+		}
+
+		#naarVis {
+			background: linear-gradient(45deg, #7ffddc, #3bec90, #b680f5);
+	    background-size: 400% 400%;
+	    animation: Gradient 10s ease infinite;
+	    padding: .5em 1em;
+	    position: fixed;
+	    top: 91%;
+	    left: 89%;
+	    color: white;
+	    text-decoration: none;
+	    font-size: 1.5em;
+			z-index: 9999
+		}
+
+		@keyframes Gradient {
+			0%
+			{
+				background-position:0% 50%
+			}
+    	50%
+			{
+				background-position:100% 50%
+			}
+    	100%
+			{
+				background-position:0% 50%
+			}
+		}
+		@keyframes rotate {
+			0%
+			{
+				/* opacity: .75; */
+				transform: rotate(0deg) scale(1);
+			}
+    	25%
+			{
+				/* opacity: 1; */
+				transform: rotate(5deg) scale(1.1);
+			}
+    	50%
+			{
+				/* opacity: .75; */
+				transform: rotate(0deg) scale(1.2);
+			}
+			75%
+			{
+				/* opacity: 1; */
+				transform: rotate(-5deg)  scale(1.1);
+			}
+			100%
+			{
+				/* opacity: .75; */
+				transform: rotate(0) scale(1);
+			}
 		}
 	</style>
-
-
-
 </head>
 <body>
-
-<h1>Fetch and show results from Adamlink SPARQL endpoint with js</h1>
-<div id="images"></div>
-
-
-
-
+<header>
+	<h1>Slopende burgemeesters van Amsterdam</h1>
+	<input id="userInput" type="text" name="" value="" placeholder="Zoek een burgemeester...">
+</header>
+<main id="images"></main>
+<a id="naarVis" href="visualisatie.html">Visualisatie</a>
 <script>
 
 	var sparqlquery = `
-	PREFIX dc: <http://purl.org/dc/elements/1.1/>
-	PREFIX owl: <http://www.w3.org/2002/07/owl#>
-	PREFIX foaf: <http://xmlns.com/foaf/0.1/>
-	PREFIX wd: <http://www.wikidata.org/entity/>
-	PREFIX p: <http://www.wikidata.org/prop/>
-	PREFIX ps: <http://www.wikidata.org/prop/statement/>
-	PREFIX pq: <http://www.wikidata.org/prop/qualifier/>
+		PREFIX dc: <http://purl.org/dc/elements/1.1/>
+    PREFIX owl: <http://www.w3.org/2002/07/owl#>
+    PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+    PREFIX wd: <http://www.wikidata.org/entity/>
+    PREFIX p: <http://www.wikidata.org/prop/>
+    PREFIX ps: <http://www.wikidata.org/prop/statement/>
+    PREFIX pq: <http://www.wikidata.org/prop/qualifier/>
+    PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 
-	SELECT ?person ?start ?end ?url ?image ?title WHERE {
-	{
-	  SERVICE <https://query.wikidata.org/sparql>
-	  {
-	   ?person p:P39 ?bn .
-	   ?bn ps:P39 wd:Q13423495 .
-	   ?bn pq:P580 ?start .
-	   ?bn pq:P582 ?end .
-	  }
-	 ?url dc:subject ?person .
-	 ?url foaf:depiction ?image .
-	 ?url dc:title ?title .
-	}
-	UNION
-	{
-	 SERVICE <https://query.wikidata.org/sparql>
-	  {
-	   ?person p:P39 ?bn .
-	   ?bn ps:P39 wd:Q13423495 .
-	   ?bn pq:P580 ?start .
-	   ?bn pq:P582 ?end .
-	  }
-	 ?url dc:subject ?pers .
-	 ?pers owl:sameAs ?person .
-	 ?url foaf:depiction ?image .
-	 ?url dc:title ?title .
-	}
-	}
-	ORDER BY ?start
-
+    SELECT DISTINCT ?person
+   (SAMPLE(?image) as ?image)
+    (SAMPLE(?title) as ?title)
+    ?name ?start ?end
+    WHERE {
+     SERVICE <https://query.wikidata.org/sparql>
+      {
+       ?person p:P39 ?bn .
+       ?person rdfs:label ?name .
+       ?bn ps:P39 wd:Q13423495 .
+       ?bn pq:P580 ?start .
+       ?bn pq:P582 ?end .
+    	 FILTER(lang(?name) = 'nl')
+      }
+     ?url dc:subject ?pers .
+     ?pers owl:sameAs ?person .
+     ?url foaf:depiction ?image .
+     ?url dc:title ?title .
+		}
+		ORDER BY ?start
 	`;
-		// more fun dc:types: 'affiche', 'japonstof', 'tegel', 'herenkostuum'
-		// more fun dc:subjects with Poster.: 'Privacy.', 'Pop music.', 'Music.', 'Squatters movement.'
+
 
 	var encodedquery = encodeURIComponent(sparqlquery);
 
-	var queryurl = 'https://api.data.adamlink.nl/datasets/AdamNet/all/services/endpoint/sparql?default-graph-uri=&query=' + encodedquery + '&format=application%2Fsparql-results%2Bjson&timeout=0&debug=on';
+	var queryurl = 'https://api.data.adamlink.nl/datasets/AdamNet/all/services/hva2018/sparql?default-graph-uri=&query=' + encodedquery + '&format=application%2Fsparql-results%2Bjson&timeout=0&debug=on';
+
+	var straatquery = `
+		PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+		PREFIX sem: <http://semanticweb.cs.vu.nl/2009/11/sem/>
+		PREFIX hg: <http://rdf.histograph.io/>
+
+		SELECT DISTINCT ?straat ?label ?end{
+			?straat sem:hasEarliestEndTimeStamp ?end ;
+			a hg:Street ;
+			rdfs:label ?label .
+			FILTER (year(xsd:dateTime(?end)) < 2017)
+		}
+		ORDER BY ?end
+	`;
+
+	var encodedquery2 = encodeURIComponent(straatquery);
+
+	var queryurl2 = 'https://api.data.adamlink.nl/datasets/AdamNet/all/services/hva2018/sparql?default-graph-uri=&query=' + encodedquery2 + '&format=application%2Fsparql-results%2Bjson&timeout=0&debug=on';
 
 	fetch(queryurl)
 	.then((resp) => resp.json()) // transform the data into json
   	.then(function(data) {
-
 		rows = data.results.bindings; // get the results
 		imgdiv = document.getElementById('images');
 		console.log(rows);
+		return rows;
+		})
+		fetch(queryurl2)
+		.then((resp) => resp.json()) // transform the data into json
+			.then(function(data) {
+				streetRows = data.results.bindings
+				console.log(streetRows);
+				for (i = 0; i < rows.length; ++i) {
 
-		for (i = 0; i < rows.length; ++i) {
+						console.log(rows[i]['name']['value']);
 
-		    var img = document.createElement('img');
-				var header = document.createElement('h3');
-				var tijd = document.createElement('p');
-				var start = Number(rows[i]['start']['value'].slice(0, 4));
-				var end = Number(rows[i]['end']['value'].slice(0, 4));
-				header.innerHTML = rows[i]['title']['value'];
-		    img.src = rows[i]['image']['value'];
-		    img.title = rows[i]['title']['value'];
-				tijd.innerHTML = "Functie periode: " + start + "-" + end;
-		    imgdiv.appendChild(header);
-				imgdiv.appendChild(img);
-				imgdiv.appendChild(tijd)
+						var container = document.createElement('div');
+						var img = document.createElement('img');
+						var header = document.createElement('h3');
+						var tijd = document.createElement('p');
+						var start = Number(rows[i]['start']['value'].slice(0, 4));
+						var end = Number(rows[i]['end']['value'].slice(0, 4));
+						var list = document.createElement('ul');
 
-		}
-	})
-	.catch(function(error) {
-		// if there is any error you will catch them here
-		console.log(error);
-	});
+						header.innerHTML = rows[i]['name']['value'];
+						img.src = rows[i]['image']['value'];
+						img.title = rows[i]['name']['value'];
+						tijd.innerHTML = "Functie periode: " + start + " - " + end;
+						container.classList.add(rows[i]['name']['value'].slice(-4));
 
+						img.tabIndex = 0;
+
+						imgdiv.appendChild(container);
+
+						container.appendChild(header);
+						container.appendChild(tijd);
+						container.appendChild(img);
+						container.appendChild(list);
+
+						var aantalLi = 0;
+						for (x = 0; x < streetRows.length; ++x) {
+
+							var gesloopt = Number(streetRows[x]['end']['value']);
+							if (gesloopt > start && gesloopt < end) {
+								var straat = document.createElement('li');
+								var straatNaam = streetRows[x]['label']['value'];
+								var sloopJaar = streetRows[x]['end']['value'];
+								straat.innerHTML =  straatNaam + " gesloopt in " + sloopJaar;
+								list.appendChild(straat);
+								straat.classList.add(rows[i]['name']['value'].slice(-4));
+								aantalLi++
+							}
+						}
+
+						console.log('Zoveel listitems: ' + aantalLi);
+
+						img.setAttribute("Style", "animation: rotate " + (22 - aantalLi) + "s ease infinite;")
+
+						var hoeveel = document.getElementsByClassName(rows[i]['name']['value'].slice(-4));
+						console.log(hoeveel);
+						var x = 1;
+						for (a = 0; a < hoeveel.length; ++a) {
+							x += .05
+							console.log(x);
+						}
+						// img.setAttribute("Style", "transform: scale(" + x + ")");
+					}
+
+					})
+					.catch(function(error) {
+						// if there is any error you will catch them here
+						console.log(error);
+					});
+					var filterInput = document.getElementById("userInput");
+			    filterInput.onkeyup = function(e){
+			      var value = e.currentTarget.value;
+						var filteredBurgemeesters = [];
+						for (i = 0; i < rows.length; ++i) {
+							var name = rows[i]['name']['value'].toLowerCase();
+							newName = name.indexOf(value);
+			        if (newName > -1) {
+								var allDiv = document.querySelectorAll('div');
+								for (j = 0; j < allDiv.length; ++j){
+									allDiv[j].setAttribute('Style', 'display: none;')
+									if (allDiv[j].classList.contains(rows[i]['name']['value'].slice(-4))) {
+										filteredBurgemeesters.push(allDiv[j]);
+									}
+								}
+								for (k = 0; k < filteredBurgemeesters.length; ++k) {
+									filteredBurgemeesters[k].setAttribute('Style', 'display: block;')
+								}
+			        }
+						}
+			    }
+					var filteredBurgemeesters = [];
 </script>
 
 
